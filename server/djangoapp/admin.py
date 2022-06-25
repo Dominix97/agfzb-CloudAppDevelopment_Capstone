@@ -8,7 +8,7 @@ from .models import CarModel, CarMake
 #     model = CarModel
 
 class CarModelInline(admin.StackedInline):
-     model = CarModel.carmakes.through    
+     model = CarModel.carmakes.through
 
 
 # class CarModelAdmin(admin.ModelAdmin):
