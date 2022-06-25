@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, render, redirect
 # from .models import related models
-# from .restapis import related methods
+from .restapis import get_dealers_from_cf, get_reviews_from_cf, get_dealer_reviews_from_cf, post_request
 from django.contrib.auth import login, logout, authenticate
 from django.contrib import messages
 from datetime import datetime
@@ -81,16 +81,60 @@ def registration_request(request):
 
 # Update the `get_dealerships` view to render the index page with a list of dealerships
 def get_dealerships(request):
-    context = {}
     if request.method == "GET":
-        return render(request, 'djangoapp/index.html', context)
+        # Get dealers from the URL
+        dealerships = get_dealers_from_cf()
+        # Concat all dealer's short name
+        dealer_names = ' '.join([dealer.short_name for dealer in dealerships])
+        # Return a list of dealer short name
+        return HttpResponse(dealerships)
 
+def get_reviews(request):
+    if request.method == "GET":
+        # Get dealers from the URL
+        reviews = get_reviews_from_cf()
+        # Return a list of dealer short name
+        return HttpResponse(reviews)
 
-# Create a `get_dealer_details` view to render the reviews of a dealer
-# def get_dealer_details(request, dealer_id):
-# ...
+def get_dealer_details(request, dealer_id):
+    context = {}
+    dealer_reviews = get_dealer_reviews_from_cf(dealer_id)
+    reviews_output = ' '.join([review_obj.review for review_obj in dealer_reviews]).join([review_obj.sentiment for review_obj in dealer_reviews])
+    return HttpResponse(reviews_output)
+
 
 # Create a `add_review` view to submit a review
-# def add_review(request, dealer_id):
-# ...
+def add_review(request, dealer_id):
+    # user_exist = False
+    # try:
+    #     username = request.POST['username']
+    #     User.objects.get(username=username)
+    #     user_exist = True
+    # except:
+    #     return "User not logged in"
+    #
+    # if user_exist:
+
+    review = dict()
+    review["id"] = 101
+    review["name"] = "Test Name"
+    review["purchase"] = True
+    review["purchase_date"] = "2000-01-01"
+    review["car_make"] = "Honda"
+    review["car_model"] = "Civic"
+    review["car_year"] = datetime.utcnow().isoformat()
+    review["dealership"] = dealer_id
+    review["review"] = "This is a great car dealer, awesome work and great customer satisfaction"
+
+    json_payload = dict()
+    json_payload["review"] = review
+
+    url = "https://c3e33bcc.us-south.apigw.appdomain.cloud/api/review"
+
+    result = post_request(url, json_payload)
+
+    return HttpResponse(result)
+
+
+
 
